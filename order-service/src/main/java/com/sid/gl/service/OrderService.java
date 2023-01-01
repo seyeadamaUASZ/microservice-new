@@ -25,7 +25,7 @@ public class OrderService {
     private final WebClient.Builder webClientBuilder;
 
     private static final String ORDER_URI="http://inventory-service/api/inventory";
-    public void placeOrder(OrderRequest orderRequest){
+    public String placeOrder(OrderRequest orderRequest){
         Order order = new Order();
       List<OrderLineItems> orderLineItems= orderRequest.getOrderLineItemsDTOS()
                 .stream()
@@ -46,8 +46,10 @@ public class OrderService {
         //another way
         boolean checkProductAllStock = Arrays.stream(inventoryResponses).allMatch(InventoryResponse::isInStock);
 
-        if(checkProductAllStock)
+        if(checkProductAllStock){
             orderRepository.save(order);
+            return "order placed sucessfully !";
+        }
         else{
             log.error("Product with name sku not found ");
             throw new IllegalArgumentException("product not available on stock");
