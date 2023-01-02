@@ -1,5 +1,7 @@
 package com.sid.gl.service;
 
+import brave.Span;
+import brave.Tracer;
 import com.sid.gl.dto.InventoryResponse;
 import com.sid.gl.dto.OrderRequest;
 import com.sid.gl.mapper.OrderMapper;
@@ -24,6 +26,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final WebClient.Builder webClientBuilder;
 
+    private final Tracer tracer;
     private static final String ORDER_URI="http://inventory-service/api/inventory";
     public String placeOrder(OrderRequest orderRequest){
         Order order = new Order();
@@ -34,26 +37,28 @@ public class OrderService {
 
         order.setOrderLineItems(orderLineItems);
         List<String> skuCodeList = getAllSkucodes(orderLineItems);
+        //tracer
+        Span inventoryServiceLookup = tracer.nextSpan().name("InventoryServiceLookup");
+        try (Tracer.SpanInScope isLookup = tracer.withSpanInScope(inventoryServiceLookup.start())) {
+            inventoryServiceLookup.tag("call", "inventory-service");
+            InventoryResponse[] inventoryResponses = verifyOrderInInventory(skuCodeList);
+
+            boolean checkProductAllStock = Arrays.stream(inventoryResponses).allMatch(InventoryResponse::isInStock);
+
+            if(checkProductAllStock){
+                orderRepository.save(order);
+                return "order placed sucessfully !";
+            }
+            else{
+                log.error("Product with name sku not found ");
+                throw new IllegalArgumentException("product not available on stock");
+            }
+        }finally {
+            inventoryServiceLookup.flush();
+        }
 
         //TODO call inventory service to verify product on inventory
-        InventoryResponse[] inventoryResponses = verifyOrderInInventory(skuCodeList);
 
-//        if(inventoryResponses.length > 0)
-//           orderRepository.save(order);
-//        else
-           //throw new IllegalArgumentException("product not available on stock");
-
-        //another way
-        boolean checkProductAllStock = Arrays.stream(inventoryResponses).allMatch(InventoryResponse::isInStock);
-
-        if(checkProductAllStock){
-            orderRepository.save(order);
-            return "order placed sucessfully !";
-        }
-        else{
-            log.error("Product with name sku not found ");
-            throw new IllegalArgumentException("product not available on stock");
-        }
 
 
     }
