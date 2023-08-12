@@ -3,15 +3,12 @@ node("master") {
     git branch: 'master', url: 'https://github.com/seyeadamaUASZ/microservice-new.git'
   }
 
-  stage("Compilation") {
+  stage("build") {
     bat "mvn clean install -DskipTests"
   }
 
-  stage("run test") {
-      bat "mvn test"
-   }
 
-   stage("run package") {
+   stage("package") {
          bat "mvn clean package"
    }
 
