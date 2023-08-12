@@ -59,8 +59,6 @@ public class OrderService {
 
         //TODO call inventory service to verify product on inventory
 
-
-
     }
 
     //create list recap all skucode on orderlineItems
@@ -78,5 +76,7 @@ public class OrderService {
                 .bodyToMono(InventoryResponse[].class)
                 .block();
     }
+
+
 }
 
