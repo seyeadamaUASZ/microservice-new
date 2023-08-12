@@ -1,4 +1,4 @@
-node("master") {
+node("any") {
   stage("Clone the project") {
     git branch: 'master', url: 'https://github.com/seyeadamaUASZ/microservice-new.git'
   }
