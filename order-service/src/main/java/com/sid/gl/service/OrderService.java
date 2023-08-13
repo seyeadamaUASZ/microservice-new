@@ -4,12 +4,14 @@ import brave.Span;
 import brave.Tracer;
 import com.sid.gl.dto.InventoryResponse;
 import com.sid.gl.dto.OrderRequest;
+import com.sid.gl.event.OrderPlacedEvent;
 import com.sid.gl.mapper.OrderMapper;
 import com.sid.gl.model.Order;
 import com.sid.gl.model.OrderLineItems;
 import com.sid.gl.repositories.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -27,6 +29,7 @@ public class OrderService {
     private final WebClient.Builder webClientBuilder;
 
     private final Tracer tracer;
+    private final KafkaTemplate<String,OrderPlacedEvent> kafkaTemplate;
     private static final String ORDER_URI="http://inventory-service/api/inventory";
     public String placeOrder(OrderRequest orderRequest){
         Order order = new Order();
@@ -47,7 +50,9 @@ public class OrderService {
 
             if(checkProductAllStock){
                 orderRepository.save(order);
+                kafkaTemplate.send("notificationTopic",new OrderPlacedEvent(order.getOrderNumber()));
                 return "order placed sucessfully !";
+
             }
             else{
                 log.error("Product with name sku not found ");

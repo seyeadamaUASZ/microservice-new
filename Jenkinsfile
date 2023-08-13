@@ -21,4 +21,8 @@ node("master") {
          }
      }
 
+     stage('Docker Build & push') {
+        bat 'mvn clean compile jib:build'
+     }
+
 }
