@@ -1,0 +1,4 @@
+name: "microservice-new"
+appmap_dir: "target/appmap"
+packages:
+- path: "com.sid.gl"
