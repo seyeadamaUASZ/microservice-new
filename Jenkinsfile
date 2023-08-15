@@ -6,14 +6,6 @@ node("master") {
   stage("build") {
     bat "mvn clean install -DskipTests"
   }
-node("master") {
-  stage("Clone the project") {
-    git branch: 'master', url: 'https://github.com/seyeadamaUASZ/microservice-new.git'
-  }
-
-  stage("build") {
-    bat "mvn clean install -DskipTests"
-  }
 
   stage("run test") {
       bat "mvn test"
